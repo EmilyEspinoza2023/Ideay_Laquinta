@@ -1,0 +1,2 @@
+/* Solo utilidades de Tailwind — sin preflight para no conflictuar con Bootstrap */
+@import "tailwindcss/utilities";

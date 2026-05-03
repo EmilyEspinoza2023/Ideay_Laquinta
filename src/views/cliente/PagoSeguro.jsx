@@ -14,6 +14,11 @@ export default function PagoSeguro() {
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
 
+  if (!cantidad || !precio || !total) {
+    navigate(-1, { replace: true })
+    return null
+  }
+
   function formatNumero(val) {
     return val.replace(/\D/g, '').slice(0, 16).replace(/(.{4})/g, '$1 ').trim()
   }
@@ -25,8 +30,25 @@ export default function PagoSeguro() {
 
   async function handlePago(e) {
     e.preventDefault()
-    setCargando(true)
     setError('')
+
+    const digitos = form.numero.replace(/\s/g, '')
+    if (digitos.length !== 16) return setError('El número de tarjeta debe tener 16 dígitos')
+
+    const [mes, anio] = form.vencimiento.split('/')
+    const mesNum = parseInt(mes, 10)
+    if (!mes || !anio || anio.length !== 2 || mesNum < 1 || mesNum > 12)
+      return setError('La fecha de vencimiento no es válida (MM/AA)')
+
+    const anioCompleto = 2000 + parseInt(anio, 10)
+    const hoy = new Date()
+    if (anioCompleto < hoy.getFullYear() || (anioCompleto === hoy.getFullYear() && mesNum < hoy.getMonth() + 1))
+      return setError('La tarjeta está vencida')
+
+    if (form.cvv.length < 3) return setError('El CVV debe tener al menos 3 dígitos')
+    if (!form.titular.trim() || form.titular.trim().length < 3) return setError('Ingresá el nombre del titular')
+
+    setCargando(true)
 
     const { data: entrada, error: errEntrada } = await supabase.from('entradas').insert({
       usuario_id: perfil.id,

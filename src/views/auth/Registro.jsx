@@ -17,12 +17,14 @@ export default function Registro() {
   function seleccionarFoto(e) {
     const file = e.target.files?.[0]
     if (!file) return
+    if (file.size > 2 * 1024 * 1024) { setError('La foto no puede superar los 2 MB'); return }
     setFotoFile(file)
     setFotoPreview(URL.createObjectURL(file))
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (form.nombre.trim().length < 2) return setError('El nombre debe tener al menos 2 caracteres')
     if (form.contrasena !== form.confirmar) return setError('Las contraseñas no coinciden')
     if (form.contrasena.length < 8) return setError('La contraseña debe tener al menos 8 caracteres')
     if (!acepta) return setError('Debés aceptar los términos y condiciones')

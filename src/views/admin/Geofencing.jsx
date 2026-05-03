@@ -12,6 +12,7 @@ export default function Geofencing() {
   const [eventos, setEventos] = useState([])
   const [guardando, setGuardando] = useState(false)
   const [guardado, setGuardado] = useState(false)
+  const [errorGeo, setErrorGeo] = useState('')
   const [cargando, setCargando] = useState(true)
 
   useEffect(() => {
@@ -33,6 +34,8 @@ export default function Geofencing() {
   }, [])
 
   async function guardar() {
+    setErrorGeo('')
+    if (activo && !mensaje.trim()) return setErrorGeo('El mensaje no puede estar vacío cuando las alertas están activas')
     setGuardando(true)
     await supabase.from('geofencing_config').update({
       activo,
@@ -130,6 +133,7 @@ export default function Geofencing() {
             </div>
           </div>
 
+          {errorGeo && <div className="alert alert-danger py-2 mb-3 small">{errorGeo}</div>}
           <button className="btn-rojo" disabled={guardando} onClick={guardar}>
             {guardando
               ? <span className="spinner-border spinner-border-sm" />

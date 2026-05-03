@@ -15,6 +15,7 @@ export default function DetalleEvento() {
   const [rating, setRating] = useState(0)
   const [hoverRating, setHoverRating] = useState(0)
   const [textoComentario, setTextoComentario] = useState('')
+  const [errorComentario, setErrorComentario] = useState('')
   const [enviandoComentario, setEnviandoComentario] = useState(false)
   const [editandoId, setEditandoId] = useState(null)
   const [editTexto, setEditTexto] = useState('')
@@ -72,7 +73,9 @@ export default function DetalleEvento() {
 
   async function enviarComentario(e) {
     e.preventDefault()
-    if (!perfil || (!textoComentario.trim() && rating === 0)) return
+    setErrorComentario('')
+    if (!textoComentario.trim() && rating === 0) return setErrorComentario('Escribí un comentario o seleccioná una calificación')
+    if (!perfil) return
     setEnviandoComentario(true)
     await supabase.from('comentarios').insert({
       evento_id: id,
@@ -82,6 +85,7 @@ export default function DetalleEvento() {
     })
     setTextoComentario('')
     setRating(0)
+    setErrorComentario('')
     await cargarEvento()
     setEnviandoComentario(false)
   }
@@ -270,8 +274,15 @@ export default function DetalleEvento() {
                     onMouseLeave={() => setHoverRating(0)}>★</button>
                 ))}
               </div>
-              <textarea className="form-control mb-2" rows={2} placeholder="Escribí tu comentario..." style={{ resize: 'none', fontSize: 13 }}
-                value={textoComentario} onChange={e => setTextoComentario(e.target.value)} />
+              <textarea className="form-control mb-1" rows={2} placeholder="Escribí tu comentario..." style={{ resize: 'none', fontSize: 13 }}
+                value={textoComentario} onChange={e => { if (e.target.value.length <= 500) { setTextoComentario(e.target.value); setErrorComentario('') } }} />
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                {errorComentario
+                  ? <small className="text-danger">{errorComentario}</small>
+                  : <span />
+                }
+                <small className="text-muted" style={{ fontSize: 11 }}>{textoComentario.length}/500</small>
+              </div>
               <button type="submit" className="btn btn-sm fw-semibold" style={{ backgroundColor: 'var(--rojo)', color: '#fff', borderRadius: 8 }} disabled={enviandoComentario}>
                 {enviandoComentario ? <span className="spinner-border spinner-border-sm" /> : 'Publicar'}
               </button>

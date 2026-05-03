@@ -76,7 +76,11 @@ export default function SeleccionarEntradas() {
                     <span className="fw-semibold" style={{ minWidth: 20, textAlign: 'center' }}>{cantidad}</span>
                     <button className="btn btn-danger rounded-circle d-flex align-items-center justify-content-center p-0"
                       style={{ width: 32, height: 32, backgroundColor: 'var(--rojo)', borderColor: 'var(--rojo)' }}
-                      onClick={e => { e.stopPropagation(); setCantidad(cantidad + 1) }}>
+                      onClick={e => {
+                        e.stopPropagation()
+                        const max = Math.min(10, precioSeleccionado?.cantidad_disponible ?? 10)
+                        setCantidad(Math.min(max, cantidad + 1))
+                      }}>
                       <i className="bi bi-plus" style={{ fontSize: 14 }}></i>
                     </button>
                   </div>
@@ -85,6 +89,13 @@ export default function SeleccionarEntradas() {
             </div>
           ))}
         </div>
+
+        {precioSeleccionado && (
+          <p className="text-muted mb-3" style={{ fontSize: 12 }}>
+            Máximo {Math.min(10, precioSeleccionado.cantidad_disponible ?? 10)} entradas por compra
+            · {precioSeleccionado.cantidad_disponible ?? 0} disponibles
+          </p>
+        )}
 
         {/* Resumen */}
         <div className="card-ideay p-3 mb-4">

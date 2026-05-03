@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -9,12 +9,16 @@ export default function CrearEvento() {
   const { id } = useParams()
   const { perfil } = useAuth()
   const esEdicion = !!id
+  const inputImagenRef = useRef(null)
 
   const [form, setForm] = useState({ titulo: '', descripcion: '', fecha: '', hora: '', categoria_id: '', imagen_url: '', activo: false })
   const [precio, setPrecio] = useState({ descripcion: 'Ticket General', precio: 0, cantidad_disponible: 200 })
   const [categorias, setCategorias] = useState([])
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [imagenFile, setImagenFile] = useState(null)
+  const [imagenPreview, setImagenPreview] = useState(null)
+  const [subiendoImagen, setSubiendoImagen] = useState(false)
 
   useEffect(() => {
     supabase.from('categorias').select('*').then(({ data }) => setCategorias(data || []))
@@ -22,6 +26,7 @@ export default function CrearEvento() {
       supabase.from('eventos').select('*, precios_evento(*)').eq('id', id).single().then(({ data }) => {
         if (data) {
           setForm({ titulo: data.titulo, descripcion: data.descripcion || '', fecha: data.fecha, hora: data.hora, categoria_id: data.categoria_id || '', imagen_url: data.imagen_url || '', activo: data.activo })
+          if (data.imagen_url) setImagenPreview(data.imagen_url)
           if (data.precios_evento?.[0]) {
             const p = data.precios_evento[0]
             setPrecio({ descripcion: p.descripcion, precio: p.precio, cantidad_disponible: p.cantidad_disponible || 200 })
@@ -31,18 +36,48 @@ export default function CrearEvento() {
     }
   }, [id])
 
+  function seleccionarImagen(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { setError('La imagen no puede superar los 5 MB'); return }
+    setImagenFile(file)
+    setImagenPreview(URL.createObjectURL(file))
+    setError('')
+  }
+
+  async function subirImagen(eventoId) {
+    if (!imagenFile) return form.imagen_url
+    setSubiendoImagen(true)
+    const ext = imagenFile.name.split('.').pop()
+    const ruta = `eventos/${eventoId}/portada.${ext}`
+    const { error: errUp } = await supabase.storage.from('avatars').upload(ruta, imagenFile, { upsert: true })
+    if (errUp) { setSubiendoImagen(false); throw new Error('Error al subir la imagen: ' + errUp.message) }
+    const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(ruta)
+    setSubiendoImagen(false)
+    return urlData.publicUrl + '?t=' + Date.now()
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
+    if (!form.titulo.trim()) return setError('El título del evento no puede estar vacío')
+    if (!esEdicion && form.fecha && form.fecha < new Date().toISOString().slice(0, 10))
+      return setError('La fecha del evento no puede ser en el pasado')
+    if (precio.cantidad_disponible < 1) return setError('La capacidad debe ser al menos 1')
     setCargando(true); setError('')
     try {
       if (esEdicion) {
-        await supabase.from('eventos').update(form).eq('id', id)
+        const imagen_url = await subirImagen(id)
+        await supabase.from('eventos').update({ ...form, imagen_url }).eq('id', id)
         await supabase.from('precios_evento').delete().eq('evento_id', id)
         await supabase.from('precios_evento').insert({ evento_id: id, ...precio })
       } else {
         const { data: ev, error: evErr } = await supabase.from('eventos').insert({ ...form, creado_por: perfil.id }).select().single()
         if (evErr) throw evErr
-        if (ev) await supabase.from('precios_evento').insert({ evento_id: ev.id, ...precio })
+        const imagen_url = await subirImagen(ev.id)
+        if (imagen_url !== form.imagen_url) {
+          await supabase.from('eventos').update({ imagen_url }).eq('id', ev.id)
+        }
+        await supabase.from('precios_evento').insert({ evento_id: ev.id, ...precio })
       }
       navigate('/admin/eventos')
     } catch (err) {
@@ -51,6 +86,8 @@ export default function CrearEvento() {
       setCargando(false)
     }
   }
+
+  const imagenActual = imagenPreview || form.imagen_url
 
   return (
     <LayoutAdmin titulo={esEdicion ? 'Editar Evento' : 'Crear Evento'}>
@@ -93,10 +130,49 @@ export default function CrearEvento() {
                     {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                   </select>
                 </div>
+
+                {/* Imagen del evento */}
                 <div>
-                  <label className="form-label small fw-medium text-muted">URL de imagen (opcional)</label>
-                  <input type="url" className="form-control" placeholder="https://..."
-                    value={form.imagen_url} onChange={e => setForm({ ...form, imagen_url: e.target.value })} />
+                  <label className="form-label small fw-medium text-muted">Imagen del evento</label>
+                  <div
+                    onClick={() => inputImagenRef.current?.click()}
+                    style={{
+                      width: '100%', height: 160, borderRadius: 12, overflow: 'hidden',
+                      border: '2px dashed #dee2e6', cursor: 'pointer', position: 'relative',
+                      backgroundColor: '#f8f9fa', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                    {imagenActual ? (
+                      <>
+                        <img src={imagenActual} alt="Portada" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}
+                          onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                          onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+                          <div className="text-white text-center">
+                            <i className="bi bi-camera fs-4 d-block"></i>
+                            <small>Cambiar imagen</small>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center text-muted">
+                        {subiendoImagen
+                          ? <span className="spinner-border" style={{ color: 'var(--rojo)' }} />
+                          : <>
+                              <i className="bi bi-image fs-2 d-block mb-1" style={{ color: '#adb5bd' }}></i>
+                              <small>Clic para subir imagen<br /><span style={{ fontSize: 11 }}>JPG, PNG, WEBP · máx 5 MB</span></small>
+                            </>
+                        }
+                      </div>
+                    )}
+                  </div>
+                  {imagenActual && !subiendoImagen && (
+                    <button type="button" className="btn btn-sm btn-link text-danger p-0 mt-1" style={{ fontSize: 12 }}
+                      onClick={() => { setImagenFile(null); setImagenPreview(null); setForm(f => ({ ...f, imagen_url: '' })) }}>
+                      <i className="bi bi-trash me-1"></i>Quitar imagen
+                    </button>
+                  )}
+                  <input ref={inputImagenRef} type="file" accept="image/jpeg,image/png,image/webp"
+                    className="d-none" onChange={seleccionarImagen} />
                 </div>
               </div>
             </div>
@@ -141,8 +217,8 @@ export default function CrearEvento() {
               <button type="button" className="btn btn-light flex-fill" style={{ borderRadius: 10 }} onClick={() => navigate('/admin/eventos')}>
                 Cancelar
               </button>
-              <button type="submit" className="btn flex-fill fw-semibold" style={{ backgroundColor: 'var(--rojo)', color: '#fff', borderRadius: 10 }} disabled={cargando}>
-                {cargando ? <span className="spinner-border spinner-border-sm" /> : (esEdicion ? 'Actualizar' : 'Crear evento')}
+              <button type="submit" className="btn flex-fill fw-semibold" style={{ backgroundColor: 'var(--rojo)', color: '#fff', borderRadius: 10 }} disabled={cargando || subiendoImagen}>
+                {cargando || subiendoImagen ? <span className="spinner-border spinner-border-sm" /> : (esEdicion ? 'Actualizar' : 'Crear evento')}
               </button>
             </div>
           </div>

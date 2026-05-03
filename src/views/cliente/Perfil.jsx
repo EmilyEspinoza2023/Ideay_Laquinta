@@ -13,6 +13,7 @@ export default function Perfil() {
   const [form, setForm] = useState({ nombre: '', apellido: '', telefono: '' })
   const [guardando, setGuardando] = useState(false)
   const [ok, setOk] = useState('')
+  const [errorPerfil, setErrorPerfil] = useState('')
 
   useEffect(() => {
     if (!perfil) return
@@ -27,8 +28,11 @@ export default function Perfil() {
   }, [perfil])
 
   async function guardar() {
+    setErrorPerfil('')
+    if (!form.nombre.trim()) return setErrorPerfil('El nombre no puede estar vacío')
+    if (!form.apellido.trim()) return setErrorPerfil('El apellido no puede estar vacío')
     setGuardando(true)
-    await supabase.from('perfiles').update({ nombre: form.nombre, apellido: form.apellido, telefono: form.telefono }).eq('id', perfil.id)
+    await supabase.from('perfiles').update({ nombre: form.nombre.trim(), apellido: form.apellido.trim(), telefono: form.telefono.trim() }).eq('id', perfil.id)
     if (cargarPerfil) cargarPerfil(perfil.id)
     setEditando(false)
     setOk('Perfil actualizado')
@@ -65,8 +69,9 @@ export default function Perfil() {
                   <input className="form-control form-control-sm" placeholder="Apellido" value={form.apellido} onChange={e => setForm({ ...form, apellido: e.target.value })} />
                 </div>
                 <input className="form-control form-control-sm" placeholder="Teléfono" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} />
+                {errorPerfil && <p className="text-danger mb-0" style={{ fontSize: 12 }}>{errorPerfil}</p>}
                 <div className="d-flex gap-2">
-                  <button className="btn btn-sm btn-light" style={{ borderRadius: 8, fontSize: 12 }} onClick={() => setEditando(false)}>Cancelar</button>
+                  <button className="btn btn-sm btn-light" style={{ borderRadius: 8, fontSize: 12 }} onClick={() => { setEditando(false); setErrorPerfil('') }}>Cancelar</button>
                   <button className="btn btn-sm fw-semibold" style={{ backgroundColor: 'var(--rojo)', color: '#fff', borderRadius: 8, fontSize: 12 }} onClick={guardar} disabled={guardando}>
                     {guardando ? <span className="spinner-border spinner-border-sm" /> : 'Guardar'}
                   </button>

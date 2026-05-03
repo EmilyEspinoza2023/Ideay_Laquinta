@@ -3,6 +3,64 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 
+function ModalTerminos({ onAceptar, onCerrar }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div style={{ backgroundColor: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 480, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <div className="d-flex align-items-center justify-content-between px-4 pt-4 pb-3" style={{ borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
+          <h6 className="fw-bold mb-0">Términos y Condiciones</h6>
+          <button onClick={onCerrar} className="btn btn-sm btn-light rounded-circle p-1" style={{ lineHeight: 1 }}>
+            <i className="bi bi-x-lg" style={{ fontSize: 14 }}></i>
+          </button>
+        </div>
+
+        {/* Contenido scrolleable */}
+        <div style={{ overflowY: 'auto', padding: '1rem 1.5rem', flex: 1 }}>
+          <p className="text-muted mb-4" style={{ fontSize: 11 }}>Última actualización: enero 2026</p>
+
+          {[
+            { titulo: '1. Aceptación de los términos', texto: 'Al crear una cuenta y usar la aplicación Ideay, aceptás estos términos y condiciones en su totalidad. Si no estás de acuerdo con alguno de ellos, por favor no uses la aplicación.' },
+            { titulo: '2. Uso de la aplicación', lista: ['Consultar y asistir a eventos', 'Comprar entradas y reservar mesas', 'Comunicarte con el equipo de La Quinta', 'Dejar comentarios y calificaciones sobre los eventos'], intro: 'Ideay es una plataforma exclusiva para clientes de Discoteca La Quinta, Juigalpa, Nicaragua. Podés usarla para:' },
+            { titulo: '3. Registro y cuenta', texto: 'Para usar Ideay debés registrarte con información verídica. Sos responsable de mantener la confidencialidad de tu contraseña. La Quinta se reserva el derecho de suspender cuentas que incumplan estas condiciones.' },
+            { titulo: '4. Compras y reservas', lista: ['Las compras son definitivas. No se realizan reembolsos salvo cancelación del evento por parte de La Quinta.', 'Las reservas de mesas tienen un tiempo de expiración. Si no se confirma antes de ese tiempo, la reserva se libera automáticamente.', 'La Quinta puede modificar o cancelar eventos por causas de fuerza mayor.'], intro: 'Al comprar una entrada o reservar una mesa:' },
+            { titulo: '5. Comportamiento en la plataforma', texto: 'Está prohibido publicar comentarios ofensivos, discriminatorios o falsos. La Quinta se reserva el derecho de eliminar cualquier contenido que considere inapropiado y de suspender la cuenta del usuario responsable.' },
+            { titulo: '6. Privacidad y datos', texto: 'Los datos que proporcionás (nombre, correo, foto de perfil) se usan únicamente para el funcionamiento de la aplicación. No compartimos tu información personal con terceros. Tu ubicación solo se usa para las alertas de proximidad y nunca se almacena en nuestros servidores.' },
+            { titulo: '7. Notificaciones', texto: 'Al aceptar los permisos de notificación, podés recibir alertas sobre eventos, reservas y mensajes del equipo de La Quinta. Podés desactivarlas en cualquier momento desde Configuración.' },
+            { titulo: '8. Modificaciones', texto: 'La Quinta puede actualizar estos términos en cualquier momento. Te notificaremos los cambios importantes a través de la aplicación. El uso continuado de Ideay implica la aceptación de los nuevos términos.' },
+            { titulo: '9. Contacto', texto: 'Si tenés dudas sobre estos términos, podés escribirnos a través del chat de la aplicación o al correo codeartbyemile@gmail.com.' },
+          ].map(({ titulo, texto, lista, intro }) => (
+            <div key={titulo} className="mb-4">
+              <p className="fw-bold mb-1" style={{ fontSize: 13, color: 'var(--rojo)' }}>{titulo}</p>
+              {intro && <p className="text-muted mb-1" style={{ fontSize: 12 }}>{intro}</p>}
+              {texto && <p className="text-muted mb-0" style={{ fontSize: 12, lineHeight: 1.7 }}>{texto}</p>}
+              {lista && (
+                <ul className="text-muted ps-3 mb-0" style={{ fontSize: 12, lineHeight: 1.7 }}>
+                  {lista.map((item, i) => <li key={i}>{item}</li>)}
+                </ul>
+              )}
+            </div>
+          ))}
+
+          <p className="text-center text-muted pb-2" style={{ fontSize: 11 }}>
+            © 2026 Ideay — La Quinta. Juigalpa, Chontales, Nicaragua.
+          </p>
+        </div>
+
+        {/* Botones */}
+        <div className="px-4 py-3 d-flex gap-2" style={{ borderTop: '1px solid #f0f0f0', flexShrink: 0 }}>
+          <button onClick={onCerrar} className="btn btn-light flex-fill" style={{ borderRadius: 10 }}>
+            Cerrar
+          </button>
+          <button onClick={onAceptar} className="btn-rojo flex-fill" style={{ borderRadius: 10 }}>
+            Acepto los términos
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Registro() {
   const navigate = useNavigate()
   const { cargarPerfil } = useAuth()
@@ -12,6 +70,7 @@ export default function Registro() {
   const [error, setError] = useState('')
   const [fotoPreview, setFotoPreview] = useState(null)
   const [fotoFile, setFotoFile] = useState(null)
+  const [modalTerminos, setModalTerminos] = useState(false)
   const inputFotoRef = useRef(null)
 
   function seleccionarFoto(e) {
@@ -46,7 +105,6 @@ export default function Registro() {
       setCargando(false); return
     }
 
-    // Subir foto si el usuario seleccionó una
     if (fotoFile && data.user) {
       const ext = fotoFile.name.split('.').pop()
       const path = `${data.user.id}/avatar.${ext}`
@@ -113,9 +171,15 @@ export default function Registro() {
           ))}
 
           <div className="form-check">
-            <input className="form-check-input" type="checkbox" checked={acepta} onChange={e => setAcepta(e.target.checked)} id="terminos" />
+            <input className="form-check-input" type="checkbox" checked={acepta}
+              onChange={e => setAcepta(e.target.checked)} id="terminos" />
             <label className="form-check-label small" htmlFor="terminos">
-              Acepto los <span className="link-rojo">términos y condiciones</span>
+              Acepto los{' '}
+              <button type="button" className="link-rojo border-0 bg-transparent p-0 fw-medium"
+                style={{ fontSize: 'inherit', textDecoration: 'underline' }}
+                onClick={() => setModalTerminos(true)}>
+                términos y condiciones
+              </button>
             </label>
           </div>
 
@@ -128,6 +192,13 @@ export default function Registro() {
           ¿Ya tenés cuenta? <Link to="/login" className="link-rojo">Iniciá sesión</Link>
         </p>
       </div>
+
+      {modalTerminos && (
+        <ModalTerminos
+          onCerrar={() => setModalTerminos(false)}
+          onAceptar={() => { setAcepta(true); setModalTerminos(false) }}
+        />
+      )}
     </div>
   )
 }

@@ -7,7 +7,14 @@ export default function AdminEventos() {
   const navigate = useNavigate()
   const [tab, setTab] = useState('Todos')
   const [eventos, setEventos] = useState([])
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const tabs = ['Todos', 'Activos', 'Borradores']
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
 
   useEffect(() => {
     cargarEventos()
@@ -61,59 +68,100 @@ export default function AdminEventos() {
         </button>
       </div>
 
-      {/* Tabla */}
-      <div className="card-ideay overflow-hidden">
-        <table className="table table-hover mb-0">
-          <thead style={{ backgroundColor: '#f8f9fa' }}>
-            <tr>
-              <th className="fw-semibold py-3 ps-4" style={{ fontSize: 13, color: '#6c757d' }}>Evento</th>
-              <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Fecha</th>
-              <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Categoría</th>
-              <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Estado</th>
-              <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {eventos.map(ev => {
-              const { label, clase } = estadoLabel(ev)
-              return (
-                <tr key={ev.id}>
-                  <td className="py-3 ps-4">
-                    <div className="d-flex align-items-center gap-3">
-                      <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--rojo)' }}>
-                        {ev.imagen_url && <img src={ev.imagen_url} alt={ev.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                      </div>
-                      <div>
-                        <p className="fw-semibold mb-0" style={{ fontSize: 14 }}>{ev.titulo}</p>
-                        <small className="text-muted">{ev.hora?.slice(0, 5)}</small>
-                      </div>
+      {/* Vista móvil — tarjetas */}
+      {isMobile ? (
+        <div className="d-flex flex-column gap-3">
+          {eventos.length === 0 && (
+            <p className="text-center text-muted py-5">No hay eventos en esta categoría</p>
+          )}
+          {eventos.map(ev => {
+            const { label, clase } = estadoLabel(ev)
+            return (
+              <div key={ev.id} className="card-ideay p-3">
+                <div className="d-flex gap-3 align-items-center">
+                  <div style={{ width: 56, height: 56, borderRadius: 10, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--rojo)' }}>
+                    {ev.imagen_url && <img src={ev.imagen_url} alt={ev.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                  </div>
+                  <div className="flex-grow-1 min-w-0">
+                    <p className="fw-semibold mb-1 text-truncate" style={{ fontSize: 15 }}>{ev.titulo}</p>
+                    <div className="d-flex flex-wrap gap-1 align-items-center">
+                      <small className="text-muted"><i className="bi bi-calendar3 me-1"></i>{formatFecha(ev.fecha)}</small>
+                      <small className="text-muted">· {ev.hora?.slice(0, 5)}</small>
                     </div>
-                  </td>
-                  <td className="py-3 align-middle" style={{ fontSize: 13 }}>{formatFecha(ev.fecha)}</td>
-                  <td className="py-3 align-middle"><span className="badge bg-light text-secondary">{ev.categorias?.nombre || '—'}</span></td>
-                  <td className="py-3 align-middle"><span className={`badge ${clase}`}>{label}</span></td>
-                  <td className="py-3 align-middle">
-                    <div className="d-flex gap-2">
-                      <button className="btn btn-sm btn-light" style={{ borderRadius: 8 }} onClick={() => navigate(`/admin/eventos/editar/${ev.id}`)}>
-                        <i className="bi bi-pencil"></i>
-                      </button>
-                      <button className="btn btn-sm btn-light" style={{ borderRadius: 8 }} onClick={() => toggleActivo(ev)}
-                        title={ev.activo ? 'Ocultar' : 'Publicar'}>
-                        <i className={`bi ${ev.activo ? 'bi-eye-slash' : 'bi-eye'}`}></i>
-                      </button>
+                    <div className="d-flex gap-2 mt-2 align-items-center">
+                      <span className="badge bg-light text-secondary">{ev.categorias?.nombre || '—'}</span>
+                      <span className={`badge ${clase}`}>{label}</span>
                     </div>
-                  </td>
-                </tr>
-              )
-            })}
-            {eventos.length === 0 && (
+                  </div>
+                  <div className="d-flex flex-column gap-2" style={{ flexShrink: 0 }}>
+                    <button className="btn btn-sm btn-light" style={{ borderRadius: 8 }} onClick={() => navigate(`/admin/eventos/editar/${ev.id}`)}>
+                      <i className="bi bi-pencil"></i>
+                    </button>
+                    <button className="btn btn-sm btn-light" style={{ borderRadius: 8 }} onClick={() => toggleActivo(ev)}
+                      title={ev.activo ? 'Ocultar' : 'Publicar'}>
+                      <i className={`bi ${ev.activo ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        /* Vista web — tabla */
+        <div className="card-ideay overflow-hidden">
+          <table className="table table-hover mb-0">
+            <thead style={{ backgroundColor: '#f8f9fa' }}>
               <tr>
-                <td colSpan={5} className="text-center text-muted py-5">No hay eventos en esta categoría</td>
+                <th className="fw-semibold py-3 ps-4" style={{ fontSize: 13, color: '#6c757d' }}>Evento</th>
+                <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Fecha</th>
+                <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Categoría</th>
+                <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Estado</th>
+                <th className="fw-semibold py-3" style={{ fontSize: 13, color: '#6c757d' }}>Acciones</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {eventos.map(ev => {
+                const { label, clase } = estadoLabel(ev)
+                return (
+                  <tr key={ev.id}>
+                    <td className="py-3 ps-4">
+                      <div className="d-flex align-items-center gap-3">
+                        <div style={{ width: 48, height: 48, borderRadius: 10, overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--rojo)' }}>
+                          {ev.imagen_url && <img src={ev.imagen_url} alt={ev.titulo} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                        </div>
+                        <div>
+                          <p className="fw-semibold mb-0" style={{ fontSize: 14 }}>{ev.titulo}</p>
+                          <small className="text-muted">{ev.hora?.slice(0, 5)}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 align-middle" style={{ fontSize: 13 }}>{formatFecha(ev.fecha)}</td>
+                    <td className="py-3 align-middle"><span className="badge bg-light text-secondary">{ev.categorias?.nombre || '—'}</span></td>
+                    <td className="py-3 align-middle"><span className={`badge ${clase}`}>{label}</span></td>
+                    <td className="py-3 align-middle">
+                      <div className="d-flex gap-2">
+                        <button className="btn btn-sm btn-light" style={{ borderRadius: 8 }} onClick={() => navigate(`/admin/eventos/editar/${ev.id}`)}>
+                          <i className="bi bi-pencil"></i>
+                        </button>
+                        <button className="btn btn-sm btn-light" style={{ borderRadius: 8 }} onClick={() => toggleActivo(ev)}
+                          title={ev.activo ? 'Ocultar' : 'Publicar'}>
+                          <i className={`bi ${ev.activo ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+              {eventos.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="text-center text-muted py-5">No hay eventos en esta categoría</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </LayoutAdmin>
   )
 }

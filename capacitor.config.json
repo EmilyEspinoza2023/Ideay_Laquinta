@@ -1,0 +1,9 @@
+{
+  "appId": "com.laquinta.ideay",
+  "appName": "Ideay",
+  "webDir": "dist",
+  "server": {
+    "url": "https://ideayapp.vercel.app",
+    "cleartext": false
+  }
+}

@@ -10,7 +10,14 @@ export default function AdminChat() {
   const [mensajes, setMensajes] = useState([])
   const [texto, setTexto] = useState('')
   const [clientesEnLinea, setClientesEnLinea] = useState(new Set())
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const bottomRef = useRef(null)
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
 
   useEffect(() => { cargarConversaciones() }, [])
 
@@ -93,9 +100,15 @@ export default function AdminChat() {
 
   return (
     <LayoutAdmin titulo="Chat con Clientes">
-      <div className="card-ideay overflow-hidden" style={{ height: 'calc(100vh - 160px)', display: 'flex' }}>
+      <div className="card-ideay overflow-hidden" style={{ height: 'calc(100dvh - 160px)', display: 'flex' }}>
         {/* Panel izquierdo — lista de conversaciones */}
-        <div style={{ width: 300, borderRight: '1px solid #e9ecef', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+        <div style={{
+          width: isMobile ? '100%' : 300,
+          borderRight: isMobile ? 'none' : '1px solid #e9ecef',
+          display: isMobile && activa ? 'none' : 'flex',
+          flexDirection: 'column',
+          flexShrink: 0
+        }}>
           <div className="p-3 border-bottom">
             <div className="d-flex align-items-center justify-content-between mb-2">
               <h6 className="fw-bold mb-0">Conversaciones</h6>
@@ -133,9 +146,14 @@ export default function AdminChat() {
 
         {/* Panel derecho — chat activo */}
         {activa ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             {/* Header */}
             <div className="p-3 border-bottom d-flex align-items-center gap-3">
+              {isMobile && (
+                <button onClick={() => setActiva(null)} className="btn btn-sm btn-light p-1" style={{ flexShrink: 0 }}>
+                  <i className="bi bi-arrow-left fs-5"></i>
+                </button>
+              )}
               <AvatarCliente p={activa.perfiles} size={38} />
               <div>
                 <p className="fw-semibold mb-0" style={{ fontSize: 14 }}>{activa.perfiles?.nombre} {activa.perfiles?.apellido}</p>
@@ -177,10 +195,12 @@ export default function AdminChat() {
             </form>
           </div>
         ) : (
-          <div style={{ flex: 1 }} className="d-flex flex-column align-items-center justify-content-center text-muted">
-            <i className="bi bi-chat-dots" style={{ fontSize: 48, color: '#dee2e6' }}></i>
-            <p className="mt-2" style={{ fontSize: 14 }}>Seleccioná una conversación para ver los mensajes</p>
-          </div>
+          !isMobile && (
+            <div style={{ flex: 1 }} className="d-flex flex-column align-items-center justify-content-center text-muted">
+              <i className="bi bi-chat-dots" style={{ fontSize: 48, color: '#dee2e6' }}></i>
+              <p className="mt-2" style={{ fontSize: 14 }}>Seleccioná una conversación para ver los mensajes</p>
+            </div>
+          )
         )}
       </div>
     </LayoutAdmin>

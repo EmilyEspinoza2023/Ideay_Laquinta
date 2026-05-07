@@ -10,8 +10,9 @@ export default function MisReservas() {
   const [activas, setActivas] = useState([])
   const [historial, setHistorial] = useState([])
   const [tiempos, setTiempos] = useState({})
-  const [cancelando, setCancelando] = useState(null) // reserva a cancelar
-  const [confirmandoId, setConfirmandoId] = useState(null) // id en proceso
+  const [cancelando, setCancelando] = useState(null)
+  const [confirmandoId, setConfirmandoId] = useState(null)
+  const [marcandoLlegada, setMarcandoLlegada] = useState(null)
 
   useEffect(() => {
     if (perfil) {
@@ -27,7 +28,8 @@ export default function MisReservas() {
     const interval = setInterval(() => {
       const nuevos = {}
       activas.forEach(r => {
-        if (r.expira_en) nuevos[r.id] = Math.max(0, new Date(r.expira_en) - new Date())
+        if (r.expira_en && !r.llego_en)
+          nuevos[r.id] = Math.max(0, new Date(r.expira_en) - new Date())
       })
       setTiempos(nuevos)
     }, 1000)
@@ -50,6 +52,13 @@ export default function MisReservas() {
     await supabase.from('reservas_mesas').update({ estado: 'cancelada' }).eq('id', cancelando.id)
     setCancelando(null)
     setConfirmandoId(null)
+    cargarReservas()
+  }
+
+  async function marcarLlegada(id) {
+    setMarcandoLlegada(id)
+    await supabase.from('reservas_mesas').update({ llego_en: new Date().toISOString() }).eq('id', id)
+    setMarcandoLlegada(null)
     cargarReservas()
   }
 
@@ -111,24 +120,49 @@ export default function MisReservas() {
                     <span className={`badge ${badgeEstado(r.estado)}`}>{labelEstado(r.estado)}</span>
                   </div>
 
-                  {/* Timer si tiene expiración */}
-                  {r.expira_en && tiempos[r.id] !== undefined && (
+                  {/* Llegada confirmada */}
+                  {r.llego_en ? (
                     <div className="d-flex align-items-center gap-2 p-2 rounded-3 mb-2"
-                      style={{ backgroundColor: tiempos[r.id] < 300000 ? '#fce4ec' : '#f8f9fa' }}>
-                      <i className="bi bi-clock" style={{ color: tiempos[r.id] < 300000 ? 'var(--rojo)' : '#6c757d', fontSize: 14 }}></i>
-                      <span className="fw-semibold" style={{ fontSize: 13, color: tiempos[r.id] < 300000 ? 'var(--rojo)' : '#6c757d' }}>
-                        Tiempo restante: {formatTiempo(tiempos[r.id])}
+                      style={{ backgroundColor: '#e8f5e9' }}>
+                      <i className="bi bi-check-circle-fill" style={{ color: '#198754', fontSize: 14 }}></i>
+                      <span className="fw-semibold" style={{ fontSize: 13, color: '#198754' }}>
+                        Llegada confirmada a las {new Date(r.llego_en).toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
+                  ) : (
+                    <>
+                      {/* Timer si tiene expiración */}
+                      {r.expira_en && tiempos[r.id] !== undefined && (
+                        <div className="d-flex align-items-center gap-2 p-2 rounded-3 mb-2"
+                          style={{ backgroundColor: tiempos[r.id] < 300000 ? '#fce4ec' : '#f8f9fa' }}>
+                          <i className="bi bi-clock" style={{ color: tiempos[r.id] < 300000 ? 'var(--rojo)' : '#6c757d', fontSize: 14 }}></i>
+                          <span className="fw-semibold" style={{ fontSize: 13, color: tiempos[r.id] < 300000 ? 'var(--rojo)' : '#6c757d' }}>
+                            Tiempo restante: {formatTiempo(tiempos[r.id])}
+                          </span>
+                        </div>
+                      )}
+                      {/* Botón Ya llegué */}
+                      <button
+                        className="btn btn-sm w-100 mt-1 mb-2 fw-semibold"
+                        style={{ borderRadius: 8, backgroundColor: '#198754', color: '#fff', fontSize: 13 }}
+                        disabled={marcandoLlegada === r.id}
+                        onClick={() => marcarLlegada(r.id)}>
+                        {marcandoLlegada === r.id
+                          ? <span className="spinner-border spinner-border-sm" />
+                          : <><i className="bi bi-geo-alt-fill me-1"></i>Ya llegué</>}
+                      </button>
+                    </>
                   )}
 
                   {/* Botón cancelar */}
-                  <button
-                    className="btn btn-sm w-100 mt-1"
-                    style={{ borderRadius: 8, border: '1.5px solid #dc3545', color: '#dc3545', fontSize: 13, backgroundColor: 'transparent' }}
-                    onClick={() => setCancelando(r)}>
-                    <i className="bi bi-x-circle me-1"></i>Cancelar reserva
-                  </button>
+                  {!r.llego_en && (
+                    <button
+                      className="btn btn-sm w-100 mt-1"
+                      style={{ borderRadius: 8, border: '1.5px solid #dc3545', color: '#dc3545', fontSize: 13, backgroundColor: 'transparent' }}
+                      onClick={() => setCancelando(r)}>
+                      <i className="bi bi-x-circle me-1"></i>Cancelar reserva
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

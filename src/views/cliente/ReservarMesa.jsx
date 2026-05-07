@@ -148,7 +148,7 @@ export default function ReservarMesa() {
       evento_id: eventoId,
       fecha_reserva: evento.fecha,
       hora_reserva: horaLlegada,
-      estado: 'pendiente',
+      estado: 'confirmada',
       expira_en: expiraEn,
     }).select().single()
 

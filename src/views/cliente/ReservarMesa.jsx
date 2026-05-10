@@ -45,7 +45,7 @@ function MapaMesas({ lista, titulo, seleccionada, onSeleccionar, colorMesa }) {
                 transition: 'transform 0.15s',
               }}
               onClick={() => mesa.disponible && onSeleccionar(mesa)}
-              title={`M${mesa.numero} — ${mesa.disponible ? 'Disponible' : 'Ocupada'}`}>
+              title={`M${mesa.numero} — ${mesa.disponible ? 'Disponible' : 'Ocupada'} · ${mesa.capacidad} personas`}>
               M{mesa.numero}
             </button>
           )

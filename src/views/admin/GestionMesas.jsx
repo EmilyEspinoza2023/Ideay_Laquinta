@@ -84,11 +84,17 @@ export default function GestionMesas() {
   async function guardarCambios() {
     setGuardando(true)
     for (const mesa of mesas) {
-      await supabase.from('mesas').update({ disponible: mesa.disponible }).eq('id', mesa.id)
+      await supabase.from('mesas').update({ disponible: mesa.disponible, capacidad: mesa.capacidad }).eq('id', mesa.id)
     }
     setGuardando(false)
     setModoEdicion(false)
     setMesaSeleccionada(null)
+  }
+
+  function cambiarCapacidad(mesaId, valor) {
+    const cap = Math.max(1, parseInt(valor) || 1)
+    setMesas(prev => prev.map(m => m.id === mesaId ? { ...m, capacidad: cap } : m))
+    setMesaSeleccionada(prev => prev?.id === mesaId ? { ...prev, capacidad: cap } : prev)
   }
 
   async function agregarMesa(zona) {
@@ -194,6 +200,16 @@ export default function GestionMesas() {
               <h6 className="fw-bold mb-3">Mesa seleccionada</h6>
               <p className="mb-1"><span className="text-muted">Número:</span> <strong>M{mesaSeleccionada.numero}</strong></p>
               <p className="mb-1"><span className="text-muted">Zona:</span> {mesaSeleccionada.zona === 'planta_baja' ? 'Planta Baja' : 'Planta Alta'}</p>
+              <div className="mb-2 d-flex align-items-center gap-2">
+                <span className="text-muted" style={{ fontSize: 14 }}>Capacidad:</span>
+                <input
+                  type="number" min={1} max={20}
+                  value={mesas.find(m => m.id === mesaSeleccionada.id)?.capacidad ?? 4}
+                  onChange={e => cambiarCapacidad(mesaSeleccionada.id, e.target.value)}
+                  style={{ width: 60, borderRadius: 6, border: '1px solid #ddd', padding: '2px 6px', fontSize: 13 }}
+                />
+                <span className="text-muted" style={{ fontSize: 13 }}>personas</span>
+              </div>
               <p className="mb-3">
                 <span className="text-muted">Estado: </span>
                 <span className={`badge ${mesas.find(m => m.id === mesaSeleccionada.id)?.disponible ? 'badge-publicado' : 'badge-expirado'}`}>

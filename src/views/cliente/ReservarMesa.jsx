@@ -93,7 +93,7 @@ export default function ReservarMesa() {
     const reservadas = new Set(reservasData?.map(r => r.mesa_id) || [])
     const mesasConEstado = (mesasData || []).map(m => ({
       ...m,
-      disponible: m.disponible && !reservadas.has(m.id),
+      disponible: !reservadas.has(m.id),
     }))
 
     setMesas(mesasConEstado)

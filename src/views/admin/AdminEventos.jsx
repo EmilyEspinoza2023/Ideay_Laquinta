@@ -52,7 +52,7 @@ export default function AdminEventos() {
   return (
     <LayoutAdmin titulo="Gestión de Eventos">
       {/* Header acciones */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
         <div className="d-flex gap-1 bg-white rounded-3 p-1" style={{ border: '1px solid #e9ecef' }}>
           {tabs.map(t => (
             <button key={t} onClick={() => setTab(t)}

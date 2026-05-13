@@ -62,18 +62,18 @@ export default function AdminTickets() {
     <LayoutAdmin titulo="Tickets vendidos">
       {/* Filtros */}
       <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
-        <div className="d-flex gap-2 flex-wrap">
+        <div className="d-flex flex-column flex-sm-row gap-2 flex-grow-1">
           <input
             type="text"
-            className="form-control form-control-sm"
+            className="form-control form-control-sm flex-grow-1"
             placeholder="Buscar cliente o evento..."
-            style={{ maxWidth: 260, borderRadius: 10 }}
+            style={{ borderRadius: 10 }}
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
           />
           <select
-            className="form-select form-select-sm"
-            style={{ maxWidth: 220, borderRadius: 10 }}
+            className="form-select form-select-sm flex-grow-1"
+            style={{ borderRadius: 10 }}
             value={filtroEvento}
             onChange={e => setFiltroEvento(e.target.value)}
           >

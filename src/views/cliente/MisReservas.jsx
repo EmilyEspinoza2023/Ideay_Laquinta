@@ -13,6 +13,7 @@ export default function MisReservas() {
   const [cancelando, setCancelando] = useState(null)
   const [confirmandoId, setConfirmandoId] = useState(null)
   const [marcandoLlegada, setMarcandoLlegada] = useState(null)
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
     if (perfil) {
@@ -49,17 +50,33 @@ export default function MisReservas() {
   async function cancelarReserva() {
     if (!cancelando) return
     setConfirmandoId(cancelando.id)
-    await supabase.from('reservas_mesas').update({ estado: 'cancelada' }).eq('id', cancelando.id)
+    const { error } = await supabase
+      .from('reservas_mesas')
+      .update({ estado: 'cancelada' })
+      .eq('id', cancelando.id)
+      .eq('usuario_id', perfil.id)
+    if (error) {
+      setErrorMsg('No se pudo cancelar la reserva. Intentá de nuevo.')
+      setTimeout(() => setErrorMsg(''), 4000)
+    }
     setCancelando(null)
     setConfirmandoId(null)
-    cargarReservas()
+    await cargarReservas()
   }
 
   async function marcarLlegada(id) {
     setMarcandoLlegada(id)
-    await supabase.from('reservas_mesas').update({ llego_en: new Date().toISOString() }).eq('id', id)
+    const { error } = await supabase
+      .from('reservas_mesas')
+      .update({ llego_en: new Date().toISOString() })
+      .eq('id', id)
+      .eq('usuario_id', perfil.id)
+    if (error) {
+      setErrorMsg('No se pudo confirmar la llegada. Intentá de nuevo.')
+      setTimeout(() => setErrorMsg(''), 4000)
+    }
     setMarcandoLlegada(null)
-    cargarReservas()
+    await cargarReservas()
   }
 
   function formatTiempo(ms) {
@@ -85,6 +102,19 @@ export default function MisReservas() {
   return (
     <div className="page-cliente">
       <NavCliente />
+
+      {/* Toast de error */}
+      {errorMsg && (
+        <div className="position-fixed top-0 start-0 end-0 d-flex justify-content-center pt-3 px-3"
+          style={{ zIndex: 10000, pointerEvents: 'none' }}>
+          <div className="d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow"
+            style={{ backgroundColor: '#dc3545', color: '#fff', fontSize: 13, maxWidth: 360, pointerEvents: 'auto' }}>
+            <i className="bi bi-exclamation-circle-fill"></i>
+            <span>{errorMsg}</span>
+          </div>
+        </div>
+      )}
+
       <div className="container-fluid px-3 px-md-4" style={{ maxWidth: 800 }}>
         <div className="pt-4 pb-3 d-flex align-items-center gap-2">
           <button className="btn-back" onClick={() => navigate(-1)}>
@@ -100,15 +130,15 @@ export default function MisReservas() {
             <div className="d-flex flex-column gap-3 mb-4">
               {activas.map(r => (
                 <div key={r.id} className="card-ideay p-3">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                      <p className="fw-bold mb-0">
+                  <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div style={{ minWidth: 0 }}>
+                      <p className="fw-bold mb-0" style={{ wordBreak: 'break-word' }}>
                         Mesa M{r.mesas?.numero}
                         <span className="text-muted fw-normal" style={{ fontSize: 12 }}>
                           {' · '}{r.mesas?.zona === 'planta_baja' ? 'Planta Baja' : 'Planta Alta'}
                         </span>
                       </p>
-                      <small className="text-muted">{r.eventos?.titulo}</small>
+                      <small className="text-muted d-block text-truncate">{r.eventos?.titulo}</small>
                       <small className="text-muted d-block">{formatFecha(r.eventos?.fecha)}</small>
                       {r.hora_reserva && (
                         <small className="text-muted">
@@ -117,7 +147,7 @@ export default function MisReservas() {
                         </small>
                       )}
                     </div>
-                    <span className={`badge ${badgeEstado(r.estado)}`}>{labelEstado(r.estado)}</span>
+                    <span className={`badge ${badgeEstado(r.estado)} flex-shrink-0`}>{labelEstado(r.estado)}</span>
                   </div>
 
                   {/* Llegada confirmada */}
@@ -222,11 +252,11 @@ export default function MisReservas() {
               </p>
             </div>
             <div className="d-flex gap-2 mt-3">
-              <button className="btn flex-1 btn-light fw-semibold" style={{ borderRadius: 10 }}
+              <button className="btn flex-fill btn-light fw-semibold" style={{ borderRadius: 10 }}
                 onClick={() => setCancelando(null)}>
                 Volver
               </button>
-              <button className="btn flex-1 fw-semibold text-white" style={{ backgroundColor: '#dc3545', borderRadius: 10 }}
+              <button className="btn flex-fill fw-semibold text-white" style={{ backgroundColor: '#dc3545', borderRadius: 10 }}
                 disabled={!!confirmandoId}
                 onClick={cancelarReserva}>
                 {confirmandoId ? <span className="spinner-border spinner-border-sm" /> : 'Sí, cancelar'}

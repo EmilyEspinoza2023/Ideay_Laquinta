@@ -51,7 +51,7 @@ export default function Perfil() {
   ]
 
   return (
-    <div className="contenido-principal">
+    <div className="page-cliente">
       <div className="px-3 pt-4 pb-2 d-flex align-items-center justify-content-between">
         <h5 className="fw-bold mb-0">Mi Perfil</h5>
         {ok && <small style={{ color: 'var(--exito)' }}><i className="bi bi-check-circle me-1"></i>{ok}</small>}

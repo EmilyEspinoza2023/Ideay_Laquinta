@@ -125,12 +125,12 @@ export default function AdminComentarios() {
 
   return (
     <LayoutAdmin titulo="Comentarios">
-      <div className="d-flex justify-content-between align-items-center mb-4">
+      <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
         <input
           type="text"
           className="form-control form-control-sm"
           placeholder="Buscar por cliente, evento o contenido..."
-          style={{ maxWidth: 320, borderRadius: 10 }}
+          style={{ maxWidth: 320, borderRadius: 10, minWidth: 180 }}
           value={busqueda}
           onChange={e => setBusqueda(e.target.value)}
         />

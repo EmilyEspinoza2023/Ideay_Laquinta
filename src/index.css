@@ -381,7 +381,6 @@ body {
 .contenido-principal { min-height: 100vh; }
 
 /* Responsividad global */
-.card-ideay { overflow: hidden; }
 img { max-width: 100%; }
 
 @media (max-width: 575px) {

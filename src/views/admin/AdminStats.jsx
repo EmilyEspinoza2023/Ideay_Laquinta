@@ -91,7 +91,7 @@ export default function AdminStats() {
   return (
     <LayoutAdmin titulo="Estadísticas">
       {/* Selector de periodo */}
-      <div className="d-flex gap-1 bg-white rounded-3 p-1 mb-4 d-inline-flex" style={{ border: '1px solid #e9ecef' }}>
+      <div className="d-inline-flex gap-1 bg-white rounded-3 p-1 mb-4" style={{ border: '1px solid #e9ecef' }}>
         {periodos.map(p => (
           <button key={p} onClick={() => setPeriodo(p)} className="btn btn-sm"
             style={{ borderRadius: 8, backgroundColor: periodo === p ? 'var(--rojo)' : 'transparent', color: periodo === p ? '#fff' : '#6c757d', padding: '6px 20px' }}>
@@ -109,7 +109,7 @@ export default function AdminStats() {
               { label: 'Usuarios registrados', valor: stats.totalUsuarios, icon: 'bi-people', color: '#e3f2fd', ic: '#0d6efd' },
               { label: 'Nuevos este periodo', valor: `+${stats.nuevosUsuarios}`, icon: 'bi-person-plus', color: '#f3e5f5', ic: '#7b1fa2' },
             ].map(({ label, valor, icon, color, ic }) => (
-              <div key={label} className="col-md-3 col-6">
+              <div key={label} className="col-4">
                 <div className="card-ideay p-3">
                   <div style={{ width: 36, height: 36, backgroundColor: color, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
                     <i className={`bi ${icon}`} style={{ color: ic, fontSize: 18 }}></i>
@@ -151,7 +151,7 @@ export default function AdminStats() {
         {/* Tendencia de ventas */}
         <div className="col-12">
           <div className="card-ideay p-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
               <h6 className="fw-bold mb-0">Tendencia de Ventas (12 meses)</h6>
               <span className="badge" style={{ backgroundColor: 'var(--rojo-claro)', color: 'var(--rojo)' }}>
                 C${stats.ingresos >= 1000 ? (stats.ingresos / 1000).toFixed(1) + 'K' : stats.ingresos.toLocaleString()} este periodo

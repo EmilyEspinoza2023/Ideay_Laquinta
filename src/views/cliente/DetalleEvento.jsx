@@ -198,7 +198,7 @@ export default function DetalleEvento() {
       </div>
 
       {/* Contenido */}
-      <div className="flex-1 px-4 pt-4 pb-28">
+      <div className="flex-1 px-4 pt-4 pb-36">
         {/* Título y precio */}
         <div className="d-flex justify-content-between align-items-start mb-3">
           <div className="flex-1 me-3">
@@ -456,7 +456,7 @@ export default function DetalleEvento() {
       </div>
 
       {/* Botones fijos */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', backgroundColor: '#fff', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 12, zIndex: 100 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, padding: '12px 16px', paddingBottom: 'calc(12px + env(safe-area-inset-bottom))', backgroundColor: '#fff', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 12, zIndex: 100 }}>
         <div style={{ maxWidth: 800, width: '100%', margin: '0 auto', display: 'flex', gap: 12 }}>
           <button
             onClick={() => esInvitado ? setModalInvitado(true) : navigate(`/evento/${id}/entradas`)}

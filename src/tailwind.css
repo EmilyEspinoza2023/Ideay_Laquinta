@@ -1,2 +1,32 @@
-/* Solo utilidades de Tailwind — sin preflight para no conflictuar con Bootstrap */
-@import "tailwindcss/utilities";
+@import "tailwindcss";
+
+@theme {
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+  }
+}
+
+/* Transición manual para asegurar que funcione */
+.card-flip-transition {
+  transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
+import { FlippableCreditCard } from '../../components/cliente/FlippableCreditCard'
 
 export default function PagoSeguro() {
   const { id } = useParams()
@@ -13,6 +14,7 @@ export default function PagoSeguro() {
   const [form, setForm] = useState({ numero: '', vencimiento: '', cvv: '', titular: '' })
   const [cargando, setCargando] = useState(false)
   const [error, setError] = useState('')
+  const [isFlipped, setIsFlipped] = useState(false)
 
   if (!cantidad || !precio || !total) {
     navigate(-1, { replace: true })
@@ -103,6 +105,15 @@ export default function PagoSeguro() {
           <p className="fw-bold mb-0" style={{ fontSize: 36, color: 'var(--rojo)' }}>C${total}.00</p>
         </div>
 
+        {/* Tarjeta Visual */}
+        <FlippableCreditCard 
+          cardNumber={form.numero}
+          cardholderName={form.titular}
+          expiryDate={form.vencimiento}
+          cvv={form.cvv}
+          isFlipped={isFlipped}
+        />
+
         {/* Formulario */}
         <form onSubmit={handlePago} className="d-flex flex-column gap-3">
           <div>
@@ -136,6 +147,8 @@ export default function PagoSeguro() {
                 <input type="password" className="form-control" placeholder="•••"
                   maxLength={4} inputMode="numeric"
                   value={form.cvv}
+                  onFocus={() => setIsFlipped(true)}
+                  onBlur={() => setIsFlipped(false)}
                   onChange={e => setForm({ ...form, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                   required />
               </div>
